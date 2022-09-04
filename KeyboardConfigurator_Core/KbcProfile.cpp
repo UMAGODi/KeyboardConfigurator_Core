@@ -242,6 +242,7 @@ BOOL KbcProfile::ProcessKey(const WORD wVk, BYTE mod, const BOOL isUp)
     return FALSE;
 
 
+
   
   if (isUp == FALSE)
   {
@@ -252,8 +253,11 @@ BOOL KbcProfile::ProcessKey(const WORD wVk, BYTE mod, const BOOL isUp)
       return FALSE;
 
 
+
+
+
     // yCüƒL[‚Éˆê’v‚·‚é’è‹`‚ðŽg—pz
-    if (mod != MOD_NONE && mapKeyList[wVk].count(mod != 0))
+    if (mod != MOD_NONE && mapKeyList[wVk].count(mod) != 0)
     {
 
     }
@@ -275,6 +279,11 @@ BOOL KbcProfile::ProcessKey(const WORD wVk, BYTE mod, const BOOL isUp)
     {
       return FALSE;
     }
+
+
+    DebugWriteLine(L"key: %d", wVk);
+
+
 
     // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     // ‚±‚±‚È‚Ç‚Å mod Žg‚¤‚Ì‚Åã‚Å‚¿‚á‚ñ‚Æ“KØ‚È mod ‚É
@@ -639,19 +648,29 @@ void ProfileMaster::SwitchProfile(wstring exe, wstring title)
   static mutex mtx;
   mtx.lock();
 
-  KbcProfile* old = CurrentProf;
-  CurrentProf = this->Default();
+  KbcProfile* old   = CurrentProf;
+  KbcProfile* newer = nullptr;
+
 
   for (auto i : lpProfiles)
   {
     if (i.second->CheckExistAssign(exe, title))
     {
-      CurrentProf = i.second;
+      newer = i.second;
       break;
     }
   }
 
+  if (newer == nullptr)
+    newer = this->Default();
 
+  if (newer == old)
+  {
+    mtx.unlock();
+    return;
+  }
+
+  CurrentProf = newer;
   old->ReleaseAllKeys();
   DebugWriteLine(L"Profile has been switched to <%s>", CurrentProf->GetName().data());
 

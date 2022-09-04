@@ -101,7 +101,7 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wp, LPARAM lp)
   // KBC‚ª‰Ÿ‚µ‚½ƒL[‚¶‚á‚È‚¯‚ê‚Î
   if ( injected & extended || !injected)
   {
-    DebugWriteLine(L"key: %s(vk: %d / sc: %d), isUp: %d", SearchKeyNameFromMap(KeyMapList, vkCode).data(), vkCode, kb->scanCode, isUp);
+    //DebugWriteLine(L"key: %s(vk: %d / sc: %d), isUp: %d", SearchKeyNameFromMap(KeyMapList, vkCode).data(), vkCode, kb->scanCode, isUp);
 
 
     // Š„‚è“–‚Ä‚ª‚ ‚ê‚ÎŒ³‚Íˆ¬‚è‚Â‚Ô‚·
@@ -171,7 +171,7 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wp, LPARAM lp)
     BOOL isUp;
     DWORD vkCode = MouseMsgToVK(wp, ms->mouseData, isUp);
 
-    DebugWriteLine(L"%d", ms->mouseData);
+    //DebugWriteLine(L"%d", ms->mouseData);
 
     if (ProMas.Current()->ProcessKey(vkCode, GetModBit(ModKeyState), isUp)) return TRUE;
     if (ProMas.Global()->ProcessKey(vkCode, GetModBit(ModKeyState), isUp)) return TRUE;
