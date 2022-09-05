@@ -31,6 +31,20 @@ HHOOK hMouHook;
 MODKEYSTATE ModKeyState = { 0 };
 
 
+BYTE MODKEYSTATE::GetModBit(void)
+{
+  BYTE mod = 0;
+
+  mod |= MOD_SHIFT * int(bool(LSHIFT | RSHIFT));
+  mod |= MOD_CONTROL * int(bool(LCONTROL | RCONTROL));
+  mod |= MOD_ALT * int(bool(LALT | RALT));
+  mod |= MOD_WIN * int(bool(LWIN | RWIN));
+
+  return mod;
+}
+
+
+
 DWORD WINAPI KeyHookThreadProc(LPVOID lpParam)
 {
 
@@ -106,8 +120,8 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wp, LPARAM lp)
 
     // 割り当てがあれば元は握りつぶす
     // Globalより現在のプロファイルが優先される
-    if (ProMas.Current()->ProcessKey(vkCode, GetModBit(ModKeyState), isUp)) return TRUE;
-    if (ProMas.Global()->ProcessKey(vkCode, GetModBit(ModKeyState), isUp)) return TRUE;
+    if (ProMas.Current()->ProcessKey(vkCode, ModKeyState, isUp)) return TRUE;
+    if (ProMas.Global()->ProcessKey(vkCode, ModKeyState, isUp)) return TRUE;
 
 
     // 修飾キーを無効化したり別のキーにしていたら押されていないに同じなので
@@ -173,8 +187,8 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wp, LPARAM lp)
 
     //DebugWriteLine(L"%d", ms->mouseData);
 
-    if (ProMas.Current()->ProcessKey(vkCode, GetModBit(ModKeyState), isUp)) return TRUE;
-    if (ProMas.Global()->ProcessKey(vkCode, GetModBit(ModKeyState), isUp)) return TRUE;
+    if (ProMas.Current()->ProcessKey(vkCode, ModKeyState, isUp)) return TRUE;
+    if (ProMas.Global()->ProcessKey(vkCode, ModKeyState, isUp)) return TRUE;
   }
 
   return CallNextHookEx(hMouHook, nCode, wp, lp);

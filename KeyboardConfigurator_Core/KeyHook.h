@@ -1,7 +1,7 @@
 #pragma once
 #include <Windows.h>
 
-typedef struct
+struct MODKEYSTATE
 {
   bool LSHIFT;
   bool RSHIFT;
@@ -12,7 +12,11 @@ typedef struct
   bool LWIN;
   bool RWIN;
 
-}MODKEYSTATE, *LPMODKEYSTATE;
+  BYTE GetModBit(void);
+
+};
+
+typedef MODKEYSTATE* LPMODKEYSTATE;
 
 DWORD WINAPI KeyHookThreadProc(LPVOID);
 LRESULT CALLBACK LowLevelKeyboardProc(int, WPARAM, LPARAM);

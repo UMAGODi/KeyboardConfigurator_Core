@@ -187,7 +187,7 @@ KEYLISTMAP& KbcProfile::GetlpKeyList(void)
 // キーを処理
 // ==============================
 
-BOOL KbcProfile::ProcessKey(const WORD wVk, BYTE mod, const BOOL isUp)
+BOOL KbcProfile::ProcessKey(const WORD wVk, MODKEYSTATE& mod, const bool isUp)
 {
 
   // mod はKBC以外で押されてる修飾キー（物理的に押されてるキー）ビット情報
@@ -241,37 +241,35 @@ BOOL KbcProfile::ProcessKey(const WORD wVk, BYTE mod, const BOOL isUp)
   if (mapKeyList.count(wVk) == 0)
     return FALSE;
 
-
+  BYTE modbit = mod.GetModBit();
 
   
   if (isUp == FALSE)
   {
 
     // 【return】
-    if ((mod == MOD_NONE && mapKeyList[wVk].count(MOD_SOLO) == 0 && mapKeyList[wVk].count(MOD_NONE) == 0)
-      || (mod != MOD_NONE && mapKeyList[wVk].count(mod) == 0 && mapKeyList[wVk].count(MOD_NONE) == 0))
+    if ((modbit == MOD_NONE && mapKeyList[wVk].count(MOD_SOLO) == 0 && mapKeyList[wVk].count(MOD_NONE) == 0)
+      || (modbit != MOD_NONE && mapKeyList[wVk].count(modbit) == 0 && mapKeyList[wVk].count(MOD_NONE) == 0))
       return FALSE;
 
 
 
-
-
     // 【修飾キーに一致する定義を使用】
-    if (mod != MOD_NONE && mapKeyList[wVk].count(mod) != 0)
+    if (mod.GetModBit() != MOD_NONE && mapKeyList[wVk].count(mod.GetModBit()) != 0)
     {
 
     }
 
     // 【ソロキーを使用】
-    else if (mod == MOD_NONE && mapKeyList[wVk].count(MOD_SOLO) != 0)
+    else if (modbit == MOD_NONE && mapKeyList[wVk].count(MOD_SOLO) != 0)
     {
-      mod = MOD_SOLO;
+      modbit = MOD_SOLO;
     }
 
     // 【単独キーを使用】
     else if (mapKeyList[wVk].count(MOD_NONE) != 0)
     {
-      mod = MOD_NONE;
+      modbit = MOD_NONE;
     }
 
     // あるかわからないけど例外
@@ -281,7 +279,6 @@ BOOL KbcProfile::ProcessKey(const WORD wVk, BYTE mod, const BOOL isUp)
     }
 
 
-    DebugWriteLine(L"key: %d", wVk);
 
 
 
@@ -289,7 +286,7 @@ BOOL KbcProfile::ProcessKey(const WORD wVk, BYTE mod, const BOOL isUp)
     // ここなどで mod 使うので上でちゃんと適切な mod に
     // しておかないと例外でるから注意
     // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    KEYINFO& key = *mapKeyList[wVk][mod];
+    KEYINFO& key = *mapKeyList[wVk][modbit];
     UINT& type = key.Type;
 
     // ------------------------
@@ -348,7 +345,36 @@ BOOL KbcProfile::ProcessKey(const WORD wVk, BYTE mod, const BOOL isUp)
       // ###################
       // 本命
       // ###################
-      AddKeySendAction(refact, afterkey, isUp);
+      AddKeySendAction(refact, afterkey, FALSE);
+
+
+      // Control
+      if (afterkey == KEY_LCONTROL)
+        mod.LCONTROL = TRUE;
+
+      else if (afterkey == KEY_RCONTROL)
+        mod.RCONTROL = TRUE;
+
+      // Shift
+      else if (afterkey == KEY_LSHIFT)
+        mod.LSHIFT = TRUE;
+
+      else if (afterkey == KEY_RSHIFT)
+        mod.RSHIFT = TRUE;
+
+      // Alt
+      else if (afterkey == KEY_LMENU)
+        mod.LALT = TRUE;
+
+      else if (afterkey == KEY_RMENU)
+        mod.RALT = TRUE;
+
+      // Win
+      else if (afterkey == KEY_LWIN)
+        mod.LWIN = TRUE;
+
+      else if (afterkey == KEY_RWIN)
+        mod.RWIN = TRUE;
 
 
       // 押し上げが存在しないキーは同時に押し上げも送信する
@@ -361,29 +387,58 @@ BOOL KbcProfile::ProcessKey(const WORD wVk, BYTE mod, const BOOL isUp)
         AddKeySendAction(refact, afterkey, TRUE);
   
         // 修飾キー
-        if ((aftermod & MOD_SHIFT) && !ISPRESSED_SHIFT(mod))
+        if ((aftermod & MOD_SHIFT) && !ISPRESSED_SHIFT(modbit))
         {
           AddDelayAction(refact, MINIMAL_DELAY);
           AddKeySendAction(refact, KEY_LSHIFT, TRUE);
         }
 
-        if ((aftermod & MOD_CONTROL) && !ISPRESSED_CONTROL(mod))
+        if ((aftermod & MOD_CONTROL) && !ISPRESSED_CONTROL(modbit))
         {
           AddDelayAction(refact, MINIMAL_DELAY);
           AddKeySendAction(refact, KEY_LCONTROL, TRUE);
         }
 
-        if ((aftermod & MOD_ALT) && !ISPRESSED_ALT(mod))
+        if ((aftermod & MOD_ALT) && !ISPRESSED_ALT(modbit))
         {
           AddDelayAction(refact, MINIMAL_DELAY);
           AddKeySendAction(refact, KEY_LMENU, TRUE);
         }
 
-        if ((aftermod & MOD_WIN) && !ISPRESSED_WIN(mod))
+        if ((aftermod & MOD_WIN) && !ISPRESSED_WIN(modbit))
         {
           AddDelayAction(refact, MINIMAL_DELAY);
           AddKeySendAction(refact, KEY_LWIN, TRUE);
         }
+
+
+        // Control
+        if (afterkey == KEY_LCONTROL)
+          mod.LCONTROL = FALSE;
+
+        else if (afterkey == KEY_RCONTROL)
+          mod.RCONTROL = FALSE;
+
+        // Shift
+        else if (afterkey == KEY_LSHIFT)
+          mod.LSHIFT = FALSE;
+
+        else if (afterkey == KEY_RSHIFT)
+          mod.RSHIFT = FALSE;
+
+        // Alt
+        else if (afterkey == KEY_LMENU)
+          mod.LALT = FALSE;
+
+        else if (afterkey == KEY_RMENU)
+          mod.RALT = FALSE;
+
+        // Win
+        else if (afterkey == KEY_LWIN)
+          mod.LWIN = FALSE;
+
+        else if (afterkey == KEY_RWIN)
+          mod.RWIN = FALSE;
       }
 
       // delete するため TRUE
@@ -439,30 +494,62 @@ BOOL KbcProfile::ProcessKey(const WORD wVk, BYTE mod, const BOOL isUp)
     
       if (i.second->RemappedMod & MOD_WIN)
         bit |= MOD_WIN;
+
+
+      // Control
+      if (i.second->RemappedKey == KEY_LCONTROL)
+        mod.LCONTROL = FALSE;
+
+      else if (i.second->RemappedKey == KEY_RCONTROL)
+        mod.RCONTROL = FALSE;
+
+      // Shift
+      else if (i.second->RemappedKey == KEY_LSHIFT)
+        mod.LSHIFT = FALSE;
+
+      else if (i.second->RemappedKey == KEY_RSHIFT)
+        mod.RSHIFT = FALSE;
+
+      // Alt
+      else if (i.second->RemappedKey == KEY_LMENU)
+        mod.LALT = FALSE;
+
+      else if (i.second->RemappedKey == KEY_RMENU)
+        mod.RALT = FALSE;
+
+      // Win
+      else if (i.second->RemappedKey == KEY_LWIN)
+        mod.LWIN = FALSE;
+
+      else if (i.second->RemappedKey == KEY_RWIN)
+        mod.RWIN = FALSE;
     }
 
+    
+    DebugWriteLine(L"control: %d", ISPRESSED_CONTROL(modbit));
 
     // 押上に必要なキーが実際に押されていなければ押上げる
     // (物理で押されてるのに押上情報送るとおかしくなる)
-    if ((bit & MOD_SHIFT) && !ISPRESSED_SHIFT(mod))
+    if ((bit & MOD_SHIFT) && !ISPRESSED_SHIFT(modbit))
     {
       AddDelayAction(refact, MINIMAL_DELAY);
       AddKeySendAction(refact, KEY_LSHIFT, TRUE);
     }
 
-    if ((bit & MOD_CONTROL) && !ISPRESSED_CONTROL(mod))
+    if ((bit & MOD_CONTROL) && !ISPRESSED_CONTROL(modbit))
     {
       AddDelayAction(refact, MINIMAL_DELAY);
       AddKeySendAction(refact, KEY_LCONTROL, TRUE);
+      DebugWriteLine(L"bit: %d", bit);
     }
 
-    if ((bit & MOD_ALT) && !ISPRESSED_ALT(mod))
+    if ((bit & MOD_ALT) && !ISPRESSED_ALT(modbit))
     {
       AddDelayAction(refact, MINIMAL_DELAY);
       AddKeySendAction(refact, KEY_LMENU, TRUE);
     }
 
-    if ((bit & MOD_WIN) && !ISPRESSED_WIN(mod))
+    if ((bit & MOD_WIN) && !ISPRESSED_WIN(modbit))
     {
       AddDelayAction(refact, MINIMAL_DELAY);
       AddKeySendAction(refact, KEY_LWIN, TRUE);
@@ -471,6 +558,9 @@ BOOL KbcProfile::ProcessKey(const WORD wVk, BYTE mod, const BOOL isUp)
 
     // delete するので TRUE
     ExecuteAction(refact, TRUE);
+
+
+    
   }
   
 

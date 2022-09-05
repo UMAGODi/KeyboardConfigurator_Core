@@ -6,6 +6,7 @@
 #include <mutex>
 #include <filesystem>
 #include <unordered_map>
+#include "KeyHook.h"
 #include "KeyCode.h"
 
 //using std::wstring;
@@ -16,7 +17,7 @@ using namespace std;
 using std::filesystem::path;
 
 
-
+/*
 #define JSON_GENERAL "General"
 #define JSON_PROFNAME "ProfName"
 #define JSON_PROFCOLOR "ProfColor"
@@ -24,6 +25,7 @@ using std::filesystem::path;
 #define JSON_APPEXE "Exe"
 #define JSON_APPTITLE "Title"
 #define JSON_FUNCTIONS "Functions"
+*/
 
 enum
 {
@@ -40,10 +42,10 @@ enum
 #define MOD_WIN		  8
 #define MOD_SOLO    64
 
-#define ISPRESSED_SHIFT(bit)   (BOOL(bit & MOD_SHIFT))
-#define ISPRESSED_CONTROL(bit) (BOOL(bit & MOD_CONTROL))
-#define ISPRESSED_ALT(bit)     (BOOL(bit & MOD_ALT))
-#define ISPRESSED_WIN(bit)     (BOOL(bit & MOD_WIN))
+#define ISPRESSED_SHIFT(bit)   (bool(bit & MOD_SHIFT))
+#define ISPRESSED_CONTROL(bit) (bool(bit & MOD_CONTROL))
+#define ISPRESSED_ALT(bit)     (bool(bit & MOD_ALT))
+#define ISPRESSED_WIN(bit)     (bool(bit & MOD_WIN))
 
 
 // ------------------------------------------------
@@ -106,7 +108,7 @@ public:
   wstring GetName(void);
   bool Using(void);
   KEYLISTMAP& GetlpKeyList(void);
-  BOOL ProcessKey(const WORD, BYTE, const BOOL);
+  BOOL ProcessKey(const WORD, MODKEYSTATE&, const bool);
   void ReleaseAllKeys(void);
 
 };
