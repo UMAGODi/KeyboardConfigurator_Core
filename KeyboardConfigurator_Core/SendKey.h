@@ -1,6 +1,8 @@
 #pragma once
+#pragma comment(lib, "winmm.lib")
 #include <Windows.h>
 #include <vector>
+#include <mmsystem.h>
 #include "DisposableThread.h"
 
 

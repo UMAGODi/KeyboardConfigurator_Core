@@ -204,14 +204,41 @@ BOOL KbcProfile::ProcessKey(const WORD wVk, MODKEYSTATE& mod, const bool isUp)
   // '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
   /*
-  | ====================================================================================================================
-  | 修飾キーは MOD_NONE　       |                 はい                   |                 　   いいえ　                      |
-  | 押されてる修飾キーに一致する定義 |                 無視                   |          ある          |          　ない           |
-  | 単独キーの定義　             |     無視　   |     ある　   |     ない    |          無視          |   　ある     |     ない    |
-  | ソロキーの定義　             |     ある   　|            ない　         |                 　    無視　                     　| 
-  | --------------------------------------------------------------------------------------------------------------------
-  |                          | ソロキーを使用 | 単独キーを使用 |   return   | 修飾キーに一致する定義を使用 | 単独キーを使用 |   return   |
-  | ====================================================================================================================
+  | =======================================================================================================================
+  | 修飾キーは MOD_NONE　        |                   はい                   |                 　   いいえ　                      |
+  | 押されてる修飾キーに一致する定義  |                   無視                   |          ある          |          　ない           |
+  | 単独キーの定義                |     無視　 　 |     ある　   |     ない 　  |          無視        　 |   　ある     |     ない    |
+  | ソロキーの定義                |     ある  　　|            ない　    　    |                 　    無視　                       | 
+  | -----------------------------------------------------------------------------------------------------------------------
+  |             　              | ソロキーを使用 | 単独キーを使用 |   return   | 修飾キーに一致する定義を使用 | 単独キーを使用 |   return   |
+  | =======================================================================================================================
+
+
+
+  【何かしらの修飾キーが押されているとき】
+
+  　修飾キーに対応する定義はある？　－はいー＞  実行
+   　｜
+    いいえ
+   　↓
+    単独キーは定義されている？　－はいー＞実行
+  　 ｜
+    いいえ
+   　↓
+    return
+
+
+
+  【修飾キーは何も押されていない】
+   ソロキーの定義はある？　－はいー＞  実行
+   　｜
+    いいえ
+   　↓
+    単独キーは定義されている？　－はいー＞実行
+  　 ｜
+    いいえ
+   　↓
+    return
 
 
   【return】------------------------------
@@ -383,7 +410,7 @@ BOOL KbcProfile::ProcessKey(const WORD wVk, MODKEYSTATE& mod, const bool isUp)
         || wVk == VK_OEM_AUTO || wVk == VK_OEM_ENLW || wVk == VK_OEM_ATTN)
       {
         // 早すぎると処理されないことがあるので
-        AddDelayAction(refact, MINIMAL_DELAY);
+        AddDelayAction(refact, 50);
         AddKeySendAction(refact, afterkey, TRUE);
   
         // 修飾キー
@@ -736,7 +763,8 @@ KbcProfile* ProfileMaster::FindByExeOrTitle(wstring exe, wstring title)
 void ProfileMaster::SwitchProfile(wstring exe, wstring title)
 {
   static mutex mtx;
-  mtx.lock();
+  
+  std::lock_guard<std::mutex> lock(mtx);
 
   KbcProfile* old   = CurrentProf;
   KbcProfile* newer = nullptr;
@@ -754,17 +782,13 @@ void ProfileMaster::SwitchProfile(wstring exe, wstring title)
   if (newer == nullptr)
     newer = this->Default();
 
-  if (newer == old)
-  {
-    mtx.unlock();
+  else if (newer == old)
     return;
-  }
 
   CurrentProf = newer;
   old->ReleaseAllKeys();
   DebugWriteLine(L"Profile has been switched to <%s>", CurrentProf->GetName().data());
 
-  mtx.unlock();
 }
 
 

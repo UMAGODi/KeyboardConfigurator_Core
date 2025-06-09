@@ -62,6 +62,11 @@ DWORD WINAPI KeyHookThreadProc(LPVOID lpParam)
   ModKeyState.RWIN = GETKEYSTATE(VK_RWIN);
 
 
+  HANDLE hOwnThread = GetCurrentThread();
+
+  if (!SetThreadPriority(hOwnThread, THREAD_PRIORITY_HIGHEST))
+    DebugWriteLine(L"failed to set thread priority!");
+
   // グローバルキーフック作成
   hKeyHook = SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, NULL, NULL);
   hMouHook = SetWindowsHookEx(WH_MOUSE_LL, LowLevelMouseProc, NULL, NULL);
@@ -82,11 +87,11 @@ DWORD WINAPI KeyHookThreadProc(LPVOID lpParam)
 
   DebugWriteLine(L"KeyHook is ready to go.");
 
-  // キーフックはなぜかMsgWaitForMultipleObjectsが使えない
+  // キーフックはメッセージループが必要
   MSG msg;
   while (GetMessage(&msg, nullptr, 0, 0))
   {
-    
+    DispatchMessage(&msg);
   }
 
   UnhookWindowsHookEx(hKeyHook);
@@ -112,10 +117,16 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wp, LPARAM lp)
   BOOL isUp     = bool(kb->flags & LLKHF_UP);
   WORD vkCode   = (WORD)kb->vkCode;
 
+  static std::mutex mtx;
+
   // KBCが押したキーじゃなければ
-  if ( injected & extended || !injected)
+  //if ( injected & extended || !injected)  /* ('24/9/16) <-- なんでextended検査してる？*/
+  if (!injected)
   {
-    //DebugWriteLine(L"key: %s(vk: %d / sc: %d), isUp: %d", SearchKeyNameFromMap(KeyMapList, vkCode).data(), vkCode, kb->scanCode, isUp);
+    // LowLevelKeyboardProcがマルチスレッドに呼び出されることはないらしいが念のため
+    std::lock_guard<std::mutex> lock(mtx);
+
+    DebugWriteLine(L"key: %s(vk: %d / sc: %d), isUp: %d", SearchKeyNameFromMap(KeyMapList, vkCode).data(), vkCode, kb->scanCode, isUp);
 
 
     // 割り当てがあれば元は握りつぶす

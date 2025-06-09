@@ -1,9 +1,8 @@
 #include <Windows.h>
+#include <mutex>
 #include "SendKey.h"
 #include "KeyCode.h"
 #include "Debug.h"
-
-
 
 
 ACTIONLIST& CreateActionList(void)
@@ -15,6 +14,7 @@ ACTIONLIST& CreateActionList(void)
 
   return refAction;
 }
+
 
 void AddKeySendAction(ACTIONLIST& refList, DWORD lCode, BOOL isUp)
 {
@@ -58,14 +58,17 @@ DWORD WINAPI DispostalKeySendProc(LPVOID lpParam)
 {
 
   // QÆg‚Á‚Ä‚é‚©‚çƒkƒ‹ƒ|‚Í–³‹
-
   ACTIONLIST& refList = *(LPACTIONLIST)lpParam;
 
   if (refList.size() == 0)
     return 0;
 
 
-  if (refList.size() >= 2) // —v‘f‚P‚Íƒwƒbƒ_î•ñ‚È‚Ì‚Å‚Ù‚ñ‚Ö‚Í‚QˆÈ~
+
+  static std::mutex mtx;
+  mtx.lock();
+
+  if (refList.size() >= 2) // —v‘f‚P‚Íƒwƒbƒ_î•ñ‚È‚Ì‚Å–{‘Ì‚Í‚QˆÈ~
   {
     for (auto i : refList)
     {
@@ -184,6 +187,10 @@ DWORD WINAPI DispostalKeySendProc(LPVOID lpParam)
     delete &refList;
     DebugWriteLine(L"lpList has been deleted");
   }
+
+
+  // â‘Î
+  mtx.unlock();
 
 
   return 0;

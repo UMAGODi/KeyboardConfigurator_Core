@@ -81,8 +81,11 @@ static LRESULT CALLBACK DummyWindowProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM l
   {
     switch (lp)
     {
+    // アイコンクリック：再起動
     case WM_LBUTTONDOWN:
       Thremas.PostQuitToAllThreads(0);
+      Execute(ExePath);
+      MessageBeep(MB_ICONEXCLAMATION);
       break;
 
     case WM_RBUTTONUP:

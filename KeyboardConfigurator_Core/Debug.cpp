@@ -21,7 +21,7 @@ void CloseDebug(void)
 
 void DebugWriteLine(LPCTSTR output, ...)
 {
-  // 複数スレッド実行するので念のためミューテックス
+  // 複数スレッド実行するのでミューテックス
   std::lock_guard<std::mutex> lock(dbgmtx);
 
   va_list arg;
